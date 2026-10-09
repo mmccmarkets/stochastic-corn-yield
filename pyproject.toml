@@ -7,7 +7,14 @@ authors = [
     { name = "Michael McConnell", email = "122504889+micmcc1121@users.noreply.github.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.3",
+    "pandas>=3.0.6",
+    "requests>=2.34.2",
+    "seaborn>=0.13.2",
+    "statsmodels>=0.15.0",
+]
 
 [project.scripts]
 stochastic-corn-yield = "stochastic_corn_yield:main"

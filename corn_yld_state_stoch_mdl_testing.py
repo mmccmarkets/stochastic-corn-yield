@@ -23,18 +23,17 @@ print('Modules imported')
 
 # Import hostircal WASDE data from 2010 to 2020
 
-wasde2010 ='https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2010-04-to-2015-12.zip'
-wasde2016 = 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2016-01-to-2020-12.zip'
-wasdeJun21 = 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2021-06.csv'
-wasdeJun22 = 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2022-06.csv'
-wasdeApr21 = 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2021-04.csv'
-wasdeApr22 = 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2022-04.csv'
-wasdeApr23 = 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2023-04.csv'
-wasdeNov23 = 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2023-11.csv'
+wasde2010 = './raw_data/oce-wasde-report-data-2010-04-to-2015-12.csv'# 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2010-04-to-2015-12.zip'
+wasde2016 = './raw_data/oce-wasde-report-data-2016-01-to-2020-12.csv'# 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2016-01-to-2020-12.zip'
+wasdeJun21 = './raw_data/oce-wasde-report-data-2021-06.csv' # 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2021-06.csv'
+wasdeJun22 = './raw_data/oce-wasde-report-data-2022-06.csv' # 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2022-06.csv'
+wasdeJun23 = './raw_data/oce-wasde-report-data-2023-06.csv' # 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2023-04.csv'
+wasdeJun24 = './raw_data/oce-wasde-report-data-2024-06.csv' # 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2024-04.csv'
+wasdeJun25 = './raw_data/oce-wasde-report-data-2025-06.csv' # 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2025-04.csv'
+wasdeJun26 = './raw_data/oce-wasde-report-data-2026-06.csv' # 'https://www.usda.gov/sites/default/files/documents/oce-wasde-report-data-2026-04.csv'
 
 
-
-wasde_list= [wasde2010, wasde2016, wasdeJun21, wasdeJun22, wasdeApr21, wasdeApr22, wasdeApr23, wasdeNov23]
+wasde_list= [wasde2010, wasde2016, wasdeJun21, wasdeJun22, wasdeJun23, wasdeJun24, wasdeJun25, wasdeJun26]
 arch=pd.DataFrame()
 
 
@@ -48,7 +47,7 @@ qry='Commodity=="Corn" & Attribute=="Yield per Harvested Acre" & ForecastMonth.i
 hist_ylds = arch.query(qry)[["MarketYear", "Value", "ForecastMonth"]].pivot_table(values='Value', index='MarketYear', columns='ForecastMonth').reset_index().rename(columns={4:'Final', 6:'June'})
 hist_ylds['mdl_year']=hist_ylds['MarketYear'].str.slice(0,4).astype('int64')
 
-fcast_year_list = range(2000, 2024, 1)
+fcast_year_list = range(2000, 2026, 1) # generalize the end year
 stoch_mdl_stats_dict={}
 
 # import the relevent data
@@ -140,7 +139,7 @@ for fc_yr in fcast_year_list:
         
         }
     
-    st_mly = pd.DataFrame(columns=['date', 'code', 'state', 'element', 'div', 'year', 'month', 'value'])
+    noaa_frames = []
     
     nan_list = ['-99.99', '-99.90', '99.90', '-9.99', '-9999', '-99.99', '9.99']
     
@@ -159,17 +158,16 @@ for fc_yr in fcast_year_list:
         noaa_df['value'] = noaa_df['value'].astype('float64')
         noaa_df['id'] = noaa_df['code'] + noaa_df['month']
         noaa_df = noaa_df.sort_values(['year', 'month', 'state'])
-        st_mly = pd.concat([st_mly, noaa_df])
+        noaa_frames.append(noaa_df)
         print('Success: ' + str(i))
     
-    st_mly = st_mly.set_index('date')
+    st_mly = pd.concat(noaa_frames).set_index('date')
     st_mly['element_desc'] = st_mly['element'].map(element_dict)
     st_mly['state_name'] = st_mly['state'].map(state_dict)
     
     print(st_mly.info())
         
-    #api_key_nass = os.environ.get('NASS_API_KEY')
-    api_key_nass = '90AAEBEA-E090-3723-A14B-D53458AD46D1'
+    api_key_nass = os.environ.get('NASS_API_KEY')
     
     nass_get_base = 'http://quickstats.nass.usda.gov/api/api_GET/'
     
@@ -231,9 +229,9 @@ for fc_yr in fcast_year_list:
         (prog_df['year']>=mdl_start_year) &
         (prog_df['year']<=mdl_forecast_year)
         ]
-    prog_fmt.loc[:,'week_ending'] = pd.to_datetime(prog_fmt['week_ending'])
-    prog_fmt.loc[:,'state_name'] = prog_fmt['state_name'].str.title()
-    prog_fmt = prog_fmt.set_index('week_ending')
+    prog_fmt['week_ending'] = pd.to_datetime(prog_fmt['week_ending'])
+    prog_fmt['state_name'] = prog_fmt['state_name'].str.title()
+    prog_fmt.set_index('week_ending', inplace=True)
     prog_mdl = prog_fmt.groupby(['state_name', 'year'])['Value'].resample('D').mean().interpolate().reset_index() #augment to interpolate to 100 percent when reporting stops
     prog_mdl = prog_mdl.rename(columns={'Value':'plt_prog'})
     
@@ -436,7 +434,7 @@ for fc_yr in fcast_year_list:
         state_plt_pred = plt_adj_norm
     
     
-    nonparam_df = nonparam_df.merge(state_plt_pred, on='state_name', how='left').rename(columns={'year':'wx_year'})
+    nonparam_df = nonparam_df.merge(state_plt_pred, on='state_name', how='left').drop(columns='year', errors='ignore')
     nonparam_df['year'] = mdl_forecast_year
     
     nonparam_results  = pd.DataFrame()
