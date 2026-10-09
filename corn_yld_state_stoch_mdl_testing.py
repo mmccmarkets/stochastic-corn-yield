@@ -468,6 +468,7 @@ for fc_yr in fcast_year_list:
     plt.title(f'Stochastic simulation of weather on adjusted trend\nyields for U.S. {mdl_forecast_year} corn crop with {num_of_draws}\nstate-level weather draws since {weather_draw_start_year}')
     plt.xlabel('Bushels per acre')
     plt.ylim(0, 1800)
+    plt.xlim(80, 200)
     ax.legend(loc='upper left')
     plt.savefig('docs/National_corn_stochastic_distribution_'+str(mdl_forecast_year)+'.png')
     plt.close()
